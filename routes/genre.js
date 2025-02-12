@@ -42,6 +42,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
 // Add a new song to a genre
 router.post("/songs", authMiddleware, async (req, res) => {
+  console.log(req.body);
   try {
     const {
       songName,
@@ -49,6 +50,7 @@ router.post("/songs", authMiddleware, async (req, res) => {
       singerName,
       musicDirector,
       actualPitch,
+      practisedPitch,
       genreId,
       userId,
     } = req.body;
@@ -60,6 +62,7 @@ router.post("/songs", authMiddleware, async (req, res) => {
       !singerName ||
       !musicDirector ||
       !actualPitch ||
+      !practisedPitch ||
       !genreId ||
       !userId
     ) {
@@ -88,6 +91,7 @@ router.post("/songs", authMiddleware, async (req, res) => {
       musicDirector,
       actualPitch,
       genre: genreId,
+      practisedPitch,
     });
 
     // Update genre's songs array
@@ -101,6 +105,32 @@ router.post("/songs", authMiddleware, async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Error creating song",
+      error: error.message,
+    });
+  }
+});
+
+// Get all genres for a user
+router.get("/user/:userId", authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Fetch all genres for the user with populated songs
+    const genres = await Genre.find({ user: userId }).populate("songs");
+
+    res.status(200).json({
+      message: "Genres fetched successfully",
+      genres,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching genres",
       error: error.message,
     });
   }
